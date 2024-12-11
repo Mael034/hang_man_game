@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .main {
+            width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+        }
+        #letterContainer {
+            width: 483px;
+            margin: 0 auto;
+            display: none;;
+        }
+        .letterBtn {
+            background-color: rgb(219, 219, 219);
+            width: 50px;
+            height: 50px;
+            text-align: center;
+        }
+        #wordField {
+            font-size: 45px;
+            margin: 25px auto;
+        }
+        #start {
+            width: 120px;
+            height: 55px;
+            margin: 0 auto;
+        }
+        #resultDisplay{
+            font-size: 25px;
+            margin: 0 auto;;
+        }
+        #restartBtn {
+            width: 120px;
+            margin: 0 auto;
+            height: 55px;
+            display: none;
+        }
+        #indice {
+            background-color: rgb(219, 219, 219);
+            width: 50px;
+            height: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <button id="start">commencer</button>
+        <span id="wordField"></span>
+        <div id="button-container"></div>
+        <div id="letterContainer">
+            <button class="letterBtn">A</button>
+            <button class="letterBtn">B</button>
+            <button class="letterBtn">C</button>
+            <button class="letterBtn">D</button>
+            <button class="letterBtn">E</button>
+            <button class="letterBtn">F</button>
+            <button class="letterBtn">G</button>
+            <button class="letterBtn">H</button>
+            <button class="letterBtn">I</button>
+            <button class="letterBtn">J</button>
+            <button class="letterBtn">K</button>
+            <button class="letterBtn">L</button>
+            <button class="letterBtn">M</button>
+            <button class="letterBtn">N</button>
+            <button class="letterBtn">O</button>
+            <button class="letterBtn">P</button>
+            <button class="letterBtn">Q</button>
+            <button class="letterBtn">R</button>
+            <button class="letterBtn">S</button>
+            <button class="letterBtn">T</button>
+            <button class="letterBtn">U</button>
+            <button class="letterBtn">V</button>
+            <button class="letterBtn">W</button>
+            <button class="letterBtn">X</button>
+            <button class="letterBtn">Y</button>
+            <button class="letterBtn">Z</button>
+            <button id="indice">?</button>
+        </div>
+        <div id="resultDisplay"></div>
+        <button id="restartBtn">Reessayer</button>
+    </div>
+    <script>
+        const container = document.getElementById('letterContainer');
+        const letterBtn = document.getElementsByClassName("letterBtn");
+        const startBtn = document.getElementById("start");
+        const wordField = document.getElementById("wordField");
+        const resultDisplay = document.getElementById("resultDisplay");
+        const restartBtn = document.getElementById("restartBtn");
+        let helpBtn = document.getElementById("indice");
+        helpBtn.addEventListener("click" , getHelp);
+        let word;
+        let help = false;
+        let indiceDisplay;
+        let triesLeft;
+        let wordIndice = new Array;
+        let fetchWord = () =>{ 
+            word = String(httpGet("https://random-word-api.herokuapp.com/word?lang=fr").slice(2, -2)).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            startBtn.removeEventListener("click" , fetchWord);
+            start();
+            console.log(word);
+            return word;
+        }
+        for(let i = 0 ; i < letterBtn.length ; i++){
+            letterBtn[i].addEventListener("click" ,()=>{playLetter(letterBtn[i])});
+        }
+        function httpGet(theUrl) {
+            var xmlHttp = null;
+            xmlHttp = new XMLHttpRequest();
+            xmlHttp.open( "GET", theUrl, false );
+            xmlHttp.send( null );
+            return xmlHttp.responseText;
+        }
+        startBtn.addEventListener("click" , fetchWord);
+        function start(){
+            container.style.display = "block";
+            for(let i = 0 ; i<letterBtn.length;i++){
+                letterBtn[i].style.backgroundColor = "rgb(219, 219, 219)";
+            }
+            for(let i = 0 ; i<word.length ; i++){
+                wordIndice.push("_");
+                indiceDisplay = String(wordIndice).split(",").join(" ");
+                wordField.textContent = indiceDisplay;
+                triesLeft = 5;
+            }
+            console.log(triesLeft);
+        }
+        restartBtn.addEventListener("click", restart);
+        function playLetter(currentLetterBtn){
+            currentLetterBtn.removeEventListener("click" , playLetter);
+            if(word.includes(currentLetterBtn.textContent)){
+                for( let i = 0 ; i<word.length ; i++){
+                    if(word[i] === currentLetterBtn.textContent){
+                        wordIndice[i]= currentLetterBtn.textContent ;
+                        indiceDisplay = String(wordIndice).split(",").join(" ");
+                        wordField.textContent = indiceDisplay;
+                        for(let i=0 ; i<letterBtn.length ; i++){
+                            if(letterBtn[i].innerText === currentLetterBtn.textContent){
+                            letterBtn[i].style.backgroundColor = "green";
+                            }
+                        }
+                    }
+                }
+            }else{
+                triesLeft--;
+                for(let i=0 ; i<letterBtn.length ; i++){
+                    if(letterBtn[i].textContent === currentLetterBtn.textContent){
+                        letterBtn[i].style.backgroundColor = "red";
+                    }
+                } 
+            }
+            gameStatus();
+        }
+        function gameStatus(){
+            if(wordIndice.includes("_")){
+                if(triesLeft === 0){
+                    for (let i=0; i<letterBtn.length; i++){
+                        letterBtn[i].removeEventListener('click', () => {playLetter(letterBtn[i].textContent)});
+                    }
+                    container.style.display = "none";
+                    resultDisplay.innerText = `Dommage vous avez échoué! le mot était : ${word}`;
+                    restartBtn.style.display = "block";
+                }
+            }else{
+                container.style.display = "none";
+                resultDisplay.innerText = "Félicitation vous avez trouvez le mot!";
+                restartBtn.style.display = "block";
+            }
+        }
+        function restart(){
+            wordIndice = [];
+            word = "";
+            wordField.textContent="";
+            restartBtn.style.display = "none";
+            resultDisplay.textContent="";
+            startBtn.addEventListener("click" , fetchWord);
+            help=false;
+
+        }
+        function getHelp(){
+            if(!help){
+                let n = Math.floor(Math.random() * word.length);
+                if(wordField.textContent.includes(word[n])){
+                   getHelp();
+                }else{
+                    wordIndice[n] = word[n];
+                    indiceDisplay = String(wordIndice).split(",").join(" ");
+                    wordField.textContent = indiceDisplay;
+                    help = true;
+                    gameStatus();
+                }
+            }
+            return;
+        }
+    </script>
+</body>
+</html>
